@@ -1,8 +1,18 @@
 import json
+import boto3
+import os 
 
+sf_client = boto3.client('stepfunctions')
+sf_arn = os.environ['SF']
 
 def invokeImageProcessing(event, context):
     print(event)
+    records = event['Records'][0]
+    response = sf_client.start_execution(
+        stateMachineArn=sf_arn,
+        input=json.dumps(records),
+    )
+
     body = {
         "message": "Go Serverless v1.0! Your function executed successfully!",
         "input": event
@@ -14,12 +24,3 @@ def invokeImageProcessing(event, context):
     }
 
     return response
-
-    # Use this code if you don't use the http event with the LAMBDA-PROXY
-    # integration
-    """
-    return {
-        "message": "Go Serverless v1.0! Your function executed successfully!",
-        "event": event
-    }
-    """

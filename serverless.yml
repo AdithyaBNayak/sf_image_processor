@@ -8,6 +8,12 @@ provider:
   region: ${opt:region, 'us-east-1'}
   lambdaHashingVersion: 20201221
   stage: ${opt:stage, 'dev'}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Resource: !GetAtt ImageProcessingSF.Arn
+          Action: states:StartExecution
 
 custom:
   servicePrefix: sf-image-processor
@@ -19,6 +25,8 @@ plugins:
 functions:
   invokeImageProcessing:
     handler: handler.invokeImageProcessing
+    environment:
+      SF: !GetAtt ImageProcessingSF.Arn
 
 stepFunctions:
   ${file(stepFunction.yml)}
