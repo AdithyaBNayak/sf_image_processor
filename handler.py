@@ -2,6 +2,7 @@ import json
 
 
 def invokeImageProcessing(event, context):
+    print(event)
     body = {
         "message": "Go Serverless v1.0! Your function executed successfully!",
         "input": event
