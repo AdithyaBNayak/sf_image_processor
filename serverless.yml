@@ -1,18 +1,49 @@
 service: sf-image-processor
-
+variablesResolutionMode: 20210326
 frameworkVersion: '2'
 
 provider:
   name: aws
   runtime: python3.8
+  region: ${opt:region, 'us-east-1'}
   lambdaHashingVersion: 20201221
+  stage: ${opt:stage, 'dev'}
+
+custom:
+  servicePrefix: sf-image-processor
+  invokeLambda: arn:aws:lambda:${self:provider.region}:${aws:accountId}:function:${self:custom.servicePrefix}-${self:provider.stage}-invokeImageProcessing
 
 plugins:
   - serverless-step-functions  
-  
+
 functions:
-  hello:
-    handler: handler.hello
+  invokeImageProcessing:
+    handler: handler.invokeImageProcessing
+    # events:
+    #   - s3:
+    #       bucket: image-processing-source-bucket
+    #       event: s3:ObjectCreated:*
+    #       # existing: true
 
 stepFunctions:
   ${file(stepFunction.yml)}
+
+resources:
+  Resources:
+    ImageProcessingSource:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: image-processing-source-bucket
+        # NotificationConfiguration:
+        #   LambdaConfigurations: 
+        #     - Event: s3:ObjectCreated:*
+        #       Function: ${self:custom.invokeLambda}
+
+    LambdaResourcePermission:
+      Type: AWS::Lambda::Permission
+      Properties: 
+        Action: lambda:InvokeFunction
+        FunctionName: ${self:custom.invokeLambda}
+        Principal: s3.amazonaws.com
+        SourceArn: !GetAtt ImageProcessingSource.Arn
+
