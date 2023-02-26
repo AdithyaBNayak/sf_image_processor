@@ -1,0 +1,41 @@
+stateMachines:
+  imageProcessorSF:
+    name: imageProcessingSF
+    definition:
+      Comment: A state machine responsible for image image processing
+      StartAt: GetFileType
+      States:
+        GetFileType: # Gets the file from the S3 location
+          Type: Pass
+          Next: CheckFileType
+        
+        CheckFileType: # Checks if the file is of jpeg type
+          Type: Choice
+          Choices:
+            - Variable: $.results.fileType
+              StringEquals: jpg
+              Next: ProcessFile
+          Default: DeleteSourceFile
+        
+        ProcessFile: # Process if file is of jpg type
+          Type: Parallel
+          Next: WriteToDB
+          Branches:
+            - StartAt: CopyToDestination
+              States:
+                CopyToDestination: 
+                  Type: Pass
+                  End: true
+            - StartAt: ResizeImage
+              States:
+                ResizeImage:
+                  Type: Pass
+                  End: true
+        
+        DeleteSourceFile: # Delete the Source file
+                Type: Pass
+                End: true
+
+        WriteToDB: # Write the required info to DB
+                Type: Pass
+                End: true                
