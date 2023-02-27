@@ -24,9 +24,17 @@ plugins:
 
 functions:
   invokeImageProcessing:
-    handler: handler.invokeImageProcessing
+    handler: lambda_handlers/invoke_image_processing.invokeImageProcessing
     environment:
       SF: !GetAtt ImageProcessingSF.Arn
+
+  getFileType:
+    handler: lambda_handlers/get_file_type.get_file_type
+
+  copyFile:
+    handler: lambda_handlers/copy_to_destination.copy_file
+    environment:
+      DEST_BUCKET: !GetAtt ImageProcessingDestination.Arn
 
 stepFunctions:
   ${file(stepFunction.yml)}
@@ -49,4 +57,9 @@ resources:
         FunctionName: ${self:custom.invokeLambda}
         Principal: s3.amazonaws.com
         SourceArn: !GetAtt ImageProcessingSource.Arn
+
+    ImageProcessingDestination:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: image-processing-source-bucket 
 
