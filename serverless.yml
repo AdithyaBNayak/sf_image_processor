@@ -36,6 +36,22 @@ functions:
     environment:
       DEST_BUCKET: !GetAtt ImageProcessingDestination.Arn
 
+  resizeImage:
+    handler: lambda_handlers/resize_image.resize
+    environment:
+      DEST_BUCKET: !GetAtt ImageProcessingDestination.Arn 
+
+  writeToDB:
+    handler: lambda_handlers/write_to_db.put_item
+    environment:
+      DEST_BUCKET: !GetAtt ImageProcessingDestination.Arn
+
+  deletwFile:
+    handler: lambda_handlers/delete_file.delete_file
+    environment:
+      DEST_BUCKET: !GetAtt ImageProcessingDestination.Arn      
+    
+
 stepFunctions:
   ${file(stepFunction.yml)}
 
@@ -62,4 +78,7 @@ resources:
       Type: AWS::S3::Bucket
       Properties:
         BucketName: image-processing-source-bucket 
+
+    # create db
+    # thumbnails table- pk : original    
 
