@@ -8,12 +8,12 @@ provider:
   region: ${opt:region, 'us-east-1'}
   lambdaHashingVersion: 20201221
   stage: ${opt:stage, 'dev'}
-  iam:
-    role:
-      statements:
-        - Effect: Allow
-          Resource: !GetAtt ImageProcessingSF.Arn
-          Action: states:StartExecution
+  # iam:
+  #   role:
+  #     statements:
+  #       - Effect: Allow
+  #         Resource: !GetAtt ImageProcessingSF.Arn
+  #         Action: states:StartExecution
 
 custom:
   servicePrefix: sf-image-processor
@@ -70,8 +70,9 @@ resources:
       Type: AWS::Lambda::Permission
       Properties: 
         Action: lambda:InvokeFunction
-        FunctionName: ${self:custom.invokeLambda}
+        FunctionName: !GetAtt InvokeImageProcessingLambdaFunction.Arn
         Principal: s3.amazonaws.com
+        SourceAccount: ${aws:accountId}        
         SourceArn: !GetAtt ImageProcessingSource.Arn
 
     ImageProcessingDestination:
