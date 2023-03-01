@@ -46,7 +46,7 @@ functions:
     environment:
       DEST_BUCKET: !GetAtt ImageProcessingDestination.Arn
 
-  deletwFile:
+  deleteFile:
     handler: lambda_handlers/delete_file.delete_file
     environment:
       DEST_BUCKET: !GetAtt ImageProcessingDestination.Arn      
@@ -60,7 +60,7 @@ resources:
     ImageProcessingSource:
       Type: AWS::S3::Bucket
       Properties:
-        BucketName: image-processing-source-bucket
+        BucketName: ${self:custom.servicePrefix}-img-processing-source-bucket
         NotificationConfiguration:
           LambdaConfigurations: 
             - Event: s3:ObjectCreated:*
@@ -77,8 +77,30 @@ resources:
     ImageProcessingDestination:
       Type: AWS::S3::Bucket
       Properties:
-        BucketName: image-processing-source-bucket 
+        BucketName: ${self:custom.servicePrefix}-img-processing-destination-bucket
 
     # create db
     # thumbnails table- pk : original    
 
+    SFExecutionRole:
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /
+        RoleName: SFExecutionRole 
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - states.amazonaws.com
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: SFExecutionPolicy
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                -  Effect: "Allow"
+                   Action:
+                     - "lambda:InvokeFunction"
+                   Resource: "*"

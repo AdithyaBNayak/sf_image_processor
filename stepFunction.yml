@@ -6,8 +6,15 @@ stateMachines:
       StartAt: GetFileType
       States:
         GetFileType: # Gets the file from the S3 location
-          Type: Pass
+          Type: Task
+          Resource: !GetAtt GetFileTypeLambdaFunction.Arn
+          TimeoutSeconds: 3
+          ResultPath: $.results.fileType
           Next: CheckFileType
+          Catch:
+            - ErrorEquals: 
+                - States.ALL
+              Next: QuitMain
         
         CheckFileType: # Checks if the file is of jpeg type
           Type: Choice
@@ -19,23 +26,92 @@ stateMachines:
         
         ProcessFile: # Process if file is of jpg type
           Type: Parallel
+          ResultPath: $.results.images 
           Next: WriteToDB
           Branches:
             - StartAt: CopyToDestination
               States:
                 CopyToDestination: 
-                  Type: Pass
+                  Type: Task
+                  Resource: !GetAtt CopyFileLambdaFunction.Arn
+                  TimeoutSeconds: 3
+                  ResultPath: $.image.original
+                  OutputPath: $.image                
                   End: true
+                  Retry:
+                    - ErrorEquals:
+                        - States.TaskFailed
+                        - States.Timeout
+                      IntervalSeconds: 5
+                      MaxAttempts: 2
+                      BackoffRate: 2.0
+                    - ErrorEquals:
+                        - States.ALL
+                      IntervalSeconds: 5
+                      MaxAttempts: 2
+                      BackoffRate: 2.0
+                  Catch:
+                    - ErrorEquals:
+                        - States.ALL
+                      Next: QuitCopy
+                QuitCopy:
+                  Type: Fail
+                  Error: CopyError
+                  Cause: An error occurred while executing CopyToDestination       
             - StartAt: ResizeImage
               States:
                 ResizeImage:
-                  Type: Pass
+                  Type: Task
+                  Resource: !GetAtt ResizeImageLambdaFunction.Arn
+                  TimeoutSeconds: 3
+                  ResultPath: $.image.resize
+                  OutputPath: $.image                
                   End: true
+                  Retry:
+                    - ErrorEquals:
+                        - States.TaskFailed
+                        - States.Timeout
+                      IntervalSeconds: 5
+                      MaxAttempts: 2
+                      BackoffRate: 2.0
+                    - ErrorEquals:
+                        - States.ALL
+                      IntervalSeconds: 5
+                      MaxAttempts: 2
+                      BackoffRate: 2.0
+                  Catch:
+                    - ErrorEquals:
+                        - States.ALL
+                      Next: QuitResize
+                QuitResize:
+                  Type: Fail
+                  Error: ResizeError
+                  Cause: An error occurred while executing ResizeImage
         
         DeleteSourceFile: # Delete the Source file
-                Type: Pass
-                End: true
+          Type: Task
+          Resource: !GetAtt DeleteFileLambdaFunction.Arn
+          TimeoutSeconds: 3
+          ResultPath: $.results.deletionStatus
+          OutputPath: $.results     
+          End: true
+          Catch:
+            - ErrorEquals: 
+                - States.ALL
+              Next: QuitMain
 
         WriteToDB: # Write the required info to DB
-                Type: Pass
-                End: true                
+          Type: Task
+          Resource: !GetAtt WriteToDBLambdaFunction.Arn
+          TimeoutSeconds: 3
+          ResultPath: $.results.writeStatus
+          End: true
+          Catch:
+            - ErrorEquals: 
+                - States.ALL
+              Next: QuitMain
+
+        QuitMain:
+          Type: Fail
+          Error: GenericError
+          Cause: An error occurred while executing state  machine      
