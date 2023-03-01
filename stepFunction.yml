@@ -1,6 +1,7 @@
 stateMachines:
   imageProcessorSF:
     name: imageProcessingSF
+    role: !GetAtt SFExecutionRole.Arn
     definition:
       Comment: A state machine responsible for image image processing
       StartAt: GetFileType
