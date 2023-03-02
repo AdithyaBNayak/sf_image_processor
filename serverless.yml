@@ -20,11 +20,18 @@ custom:
   invokeLambda: arn:aws:lambda:${self:provider.region}:${aws:accountId}:function:${self:custom.servicePrefix}-${self:provider.stage}-invokeImageProcessing
 
 plugins:
-  - serverless-step-functions  
+  - serverless-step-functions
+  - serverless-iam-roles-per-function
 
 functions:
   invokeImageProcessing:
     handler: lambda_handlers/invoke_image_processing.invokeImageProcessing
+    iamRoleStatements:
+      - Effect: Allow
+        Resource: !GetAtt ImageProcessingSF.Arn
+        Action: states:StartExecution
+
+
     environment:
       SF: !GetAtt ImageProcessingSF.Arn
 
