@@ -8,12 +8,6 @@ provider:
   region: ${opt:region, 'us-east-1'}
   lambdaHashingVersion: 20201221
   stage: ${opt:stage, 'dev'}
-  # iam:
-  #   role:
-  #     statements:
-  #       - Effect: Allow
-  #         Resource: !GetAtt ImageProcessingSF.Arn
-  #         Action: states:StartExecution
 
 custom:
   servicePrefix: sf-image-processor
@@ -26,6 +20,8 @@ plugins:
 functions:
   invokeImageProcessing:
     handler: lambda_handlers/invoke_image_processing.invokeImageProcessing
+    layers:
+      - arn:aws:lambda:${self:provider.region}:017000801446:layer:AWSLambdaPowertoolsPythonV2-Arm64:23
     iamRoleStatements:
       - Effect: Allow
         Resource: !GetAtt ImageProcessingSF.Arn

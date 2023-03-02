@@ -1,17 +1,21 @@
 import json
 import boto3
-import os 
+import os
+
+from aws_lambda_powertools import Logger
+
+logger = Logger()
 
 sf_client = boto3.client('stepfunctions')
 sf_arn = os.environ['SF']
 
 def invokeImageProcessing(event, context):
-    print(event)
+    logger.info(event)
     records = event['Records'][0]
     response = sf_client.start_execution(
         stateMachineArn=sf_arn,
         input=json.dumps(records),
-    )
+    ) 
 
     body = {
         "message": "Go Serverless v1.0! Your function executed successfully!",
