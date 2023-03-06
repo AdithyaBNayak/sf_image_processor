@@ -20,8 +20,13 @@ stateMachines:
         CheckFileType: # Checks if the file is of jpeg type
           Type: Choice
           Choices:
-            - Variable: $.results.fileType
-              StringEquals: jpg
+            - Or:
+                - Variable: $.results.fileType
+                  StringEquals: jpg
+                - Variable: $.results.fileType
+                  StringEquals: jpeg
+                - Variable: $.results.fileType
+                  StringEquals: png
               Next: ProcessFile
           Default: DeleteSourceFile
         

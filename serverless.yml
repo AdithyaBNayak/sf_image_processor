@@ -8,6 +8,8 @@ provider:
   region: ${opt:region, 'us-east-1'}
   lambdaHashingVersion: 20201221
   stage: ${opt:stage, 'dev'}
+  layers:
+      - arn:aws:lambda:${self:provider.region}:017000801446:layer:AWSLambdaPowertoolsPythonV2-Arm64:23
 
 custom:
   servicePrefix: sf-image-processor
@@ -20,14 +22,10 @@ plugins:
 functions:
   invokeImageProcessing:
     handler: lambda_handlers/invoke_image_processing.invokeImageProcessing
-    layers:
-      - arn:aws:lambda:${self:provider.region}:017000801446:layer:AWSLambdaPowertoolsPythonV2-Arm64:23
     iamRoleStatements:
       - Effect: Allow
         Resource: !GetAtt ImageProcessingSF.Arn
         Action: states:StartExecution
-
-
     environment:
       SF: !GetAtt ImageProcessingSF.Arn
 
@@ -37,8 +35,17 @@ functions:
   copyFile:
     handler: lambda_handlers/copy_to_destination.copy_file
     environment:
-      DEST_BUCKET: !GetAtt ImageProcessingDestination.Arn
-
+      DEST_BUCKET: !Ref ImageProcessingDestination
+      REGION: ${self:provider.region}
+    iamRoleStatements:
+      - Effect: Allow
+        Resource: 
+          - arn:aws:s3:::sf-image-processor-img-processing-destination-bucket
+          - arn:aws:s3:::sf-image-processor-img-processing-destination-bucket/*
+          - arn:aws:s3:::sf-image-processor-img-processing-source-bucket
+          - arn:aws:s3:::sf-image-processor-img-processing-source-bucket/*
+        Action: s3:*
+        
   resizeImage:
     handler: lambda_handlers/resize_image.resize
     environment:

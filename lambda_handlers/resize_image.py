@@ -1,11 +1,10 @@
 import os
-import boto3	
-import json
-import datetime
+# import json
+# import datetime
 import boto3
-import PIL # for image resizing
-from PIL import Image
-from io import BytesIO
+# import PIL # for image resizing
+# from PIL import Image
+# from io import BytesIO
 
 s3_client = boto3.client('s3')
 DESTINATION_BUCKET = os.environ['DEST_BUCKET']
