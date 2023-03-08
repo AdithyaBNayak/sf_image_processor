@@ -45,7 +45,7 @@ functions:
           - arn:aws:s3:::sf-image-processor-img-processing-source-bucket
           - arn:aws:s3:::sf-image-processor-img-processing-source-bucket/*
         Action: s3:*
-        
+
   resizeImage:
     handler: lambda_handlers/resize_image.resize
     environment:
@@ -54,7 +54,12 @@ functions:
   writeToDB:
     handler: lambda_handlers/write_to_db.put_item
     environment:
-      DEST_BUCKET: !GetAtt ImageProcessingDestination.Arn
+      DBNAME: !Ref ThumbNailsDB
+    iamRoleStatements:
+      - Effect: Allow
+        Resource: 
+          - !GetAtt ThumbNailsDB.Arn
+        Action: dynamodb:PutItem  
 
   deleteFile:
     handler: lambda_handlers/delete_file.delete_file
@@ -91,6 +96,20 @@ resources:
         BucketName: ${self:custom.servicePrefix}-img-processing-destination-bucket
 
     # create db
+    ThumbNailsDB:
+      Type: AWS::DynamoDB::Table
+      Properties: 
+        AttributeDefinitions: 
+          - AttributeName: original
+            AttributeType: S
+        KeySchema:
+          - AttributeName: original
+            KeyType: HASH
+        ProvisionedThroughput: 
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
+        TableName: ThumbNailsDB
+
     # thumbnails table- pk : original    
 
     SFExecutionRole:
