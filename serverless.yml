@@ -64,7 +64,13 @@ functions:
   deleteFile:
     handler: lambda_handlers/delete_file.delete_file
     environment:
-      DEST_BUCKET: !GetAtt ImageProcessingDestination.Arn      
+      DEST_BUCKET: !GetAtt ImageProcessingDestination.Arn
+    iamRoleStatements:  
+      - Effect: Allow
+        Resource:
+          - arn:aws:s3:::sf-image-processor-img-processing-source-bucket
+          - arn:aws:s3:::sf-image-processor-img-processing-source-bucket/*
+        Action: s3:DeleteObject       
     
 
 stepFunctions:
